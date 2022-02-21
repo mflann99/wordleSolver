@@ -1,1 +1,3 @@
 # worleSolver
+
+This is a quick program written to help me cheat at guessing wordle words. The interface is pretty clunky, and the wordlist still includes words that aren't valid guesses. Future improvements will probably be made to improve the algorithm and have a web based display interface. Most words can be guessed within 4 tries using exclusively guesses from the top 10 list of words generated.
