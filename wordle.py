@@ -1,9 +1,16 @@
 from numpy import NaN
 import pandas as pd
+import random
 
 ##CSV based on wordlist found online. Data could be improved by adding in relative frequency of each
 ## word being used in regular speech
 words = pd.read_csv("words.csv")
+
+global l1_values
+global l2_values
+global l3_values
+global l4_values
+global l5_values
 
 l1_values = words["L1"].value_counts()
 l2_values = words["L2"].value_counts()
@@ -114,15 +121,8 @@ def elim_letters(word, letter_status, guess_df):
 guess = words
 quit = False
 
-while quit == False:
-    #Dynamic calculation of cl score based on remaining words
-    #l1_values = guess["L1"].value_counts()
-    #l2_values = guess["L2"].value_counts()
-    #l3_values = guess["L3"].value_counts()
-    #l4_values = guess["L4"].value_counts()
-    #l5_values = guess["L5"].value_counts()
 
-    #guess.loc["cl_score"] = guess.apply(lambda row: calculate_CL_Score(row), axis=1)
+while quit == False:
 
     word_guess = input("Enter word guessed: ")
 
@@ -144,6 +144,7 @@ while quit == False:
     if guessType == 0:
         guess = guessCheck(word_guess,status_array,guess)
         #code used to change cl_score based on remaining words
+        #gives higher priority to letters 
         l1_values = guess["L1"].value_counts()
         l2_values = guess["L2"].value_counts()
         l3_values = guess["L3"].value_counts()
@@ -155,9 +156,63 @@ while quit == False:
     else:
         guess = elim_letters(word_guess,status_array,guess)
 
-    #possible_guess = 
-    print(guess.sort_values("cl_score",ascending=False).head(10))
-    #print(possible_guess["word"])
+    possible_guess = guess.sort_values("cl_score",ascending=False).head(10)
+    #print(guess.sort_values("cl_score",ascending=False).head(10))
+    print(possible_guess["word"].head(10))
     print("Total Possible words: " + str(len(guess.index)))
 
+def test_letter_status(guess_word,correct_word):
+    status = ""
 
+    for i in range(0,len(guess_word)):
+        if guess_word[i] == correct_word[i]:
+            status += "g"
+        elif contains(correct_word,guess_word[i]):
+            status += "y"
+        else:
+            status += "r"
+
+    return status
+
+def test_Eff(guess_df):
+    guess = guess_df
+    index = random.randint(0, 11429)
+    correct_word = guess_df.at[index,"word"]
+    guess_word = "cares" #guess_df.at[random.randint(0, 11429),"word"]
+    guess_num = 0
+    correct = False
+
+    while correct == False:
+        if(guess_num == 20): correct = True
+        status = test_letter_status(guess_word,correct_word)
+
+        #print("guess: " + str(guess_num) + " " +  guess_word + " " + correct_word)
+
+        if status == "ggggg":
+            correct = True
+        guess = guessCheck(guess_word,status,guess)
+
+        l1_values = guess["L1"].value_counts()
+        l2_values = guess["L2"].value_counts()
+        l3_values = guess["L3"].value_counts()
+        l4_values = guess["L4"].value_counts()
+        l5_values = guess["L5"].value_counts()
+
+        guess.drop('cl_score', inplace=True, axis=1)
+        guess["cl_score"] = guess.apply(lambda row: calculate_CL_Score(row), axis=1)
+        guess = guess.sort_values("cl_score",ascending=False)
+        guess_word = guess.iloc[0,0]
+        guess_num += 1
+    return guess_num
+
+# freq = {}
+
+# for i in range(0,1000):
+#     guess_num = test_Eff(guess)
+#     if (guess_num in freq):
+#         freq[guess_num] += 1
+#     else:
+#         freq[guess_num] = 1
+
+# for key, value in freq.items():
+#     print ("% d : % d"%(key, value))
