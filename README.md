@@ -1,6 +1,8 @@
 # worleSolver
 
-This is a quick program written to help me cheat at guessing wordle words. The interface is pretty clunky, and the wordlist still includes words that aren't valid guesses. Future improvements will probably be made to improve the algorithm and have a web based display interface. Most words can be guessed within 4 tries using exclusively guesses from the top 10 list of words generated.
+I can't believe I mispelled wordle in the repository title!
+
+This is a quick program written to help me cheat at guessing wordle words. The wordlist includes lots of invalid guesses, hence the UI displaying a top 10 list of possible guesses. I've found that even though initial testing of the algorithm doesn't show a great success rate at 88% of words being guessed in 6 tries or less, using judgement to pick the most likely word out of the 10 displayed will almost always result in the correct guess within 6 tries.
 
 Frequency table for number of guess required to guess a randomly generated word out of the 11430 5 letter words in the language. There was a total of 1000 simulations of guessing words run to get this data.
  2 :   21

@@ -1,6 +1,7 @@
 from numpy import NaN
 import pandas as pd
 import random
+import PySimpleGUI as sg
 
 ##CSV based on wordlist found online. Data could be improved by adding in relative frequency of each
 ## word being used in regular speech
@@ -118,48 +119,46 @@ def elim_letters(word, letter_status, guess_df):
     #will need to change. Don't want to permenantly eliminate double letters
     return words_cp
 
-guess = words
-quit = False
 
+#outdated command line based UI
+# while quit == False:
 
-while quit == False:
+#     word_guess = input("Enter word guessed: ")
 
-    word_guess = input("Enter word guessed: ")
+#     if word_guess == "complete":
+#         guess = words
+#         continue
 
-    if word_guess == "complete":
-        guess = words
-        continue
+#     if word_guess == "QUIT":
+#         quit = True
+#         break
 
-    if word_guess == "QUIT":
-        quit = True
-        break
+#     status = input("Enter letter status: ")
+#     status_array = []
 
-    status = input("Enter letter status: ")
-    status_array = []
+#     guessType =  0 #int(input("Enter Guess Type (0 for guessing word. 1 for elimnating letters): "))
 
-    guessType =  0 #int(input("Enter Guess Type (0 for guessing word. 1 for elimnating letters): "))
+#     for i in status: ##could be changed to a list cast
+#         status_array.append(i)
+#     if guessType == 0:
+#         guess = guessCheck(word_guess,status_array,guess)
+#         #code used to change cl_score based on remaining words
+#         #gives higher priority to letters 
+#         l1_values = guess["L1"].value_counts()
+#         l2_values = guess["L2"].value_counts()
+#         l3_values = guess["L3"].value_counts()
+#         l4_values = guess["L4"].value_counts()
+#         l5_values = guess["L5"].value_counts()
 
-    for i in status: ##could be changed to a list cast
-        status_array.append(i)
-    if guessType == 0:
-        guess = guessCheck(word_guess,status_array,guess)
-        #code used to change cl_score based on remaining words
-        #gives higher priority to letters 
-        l1_values = guess["L1"].value_counts()
-        l2_values = guess["L2"].value_counts()
-        l3_values = guess["L3"].value_counts()
-        l4_values = guess["L4"].value_counts()
-        l5_values = guess["L5"].value_counts()
+#         guess.drop('cl_score', inplace=True, axis=1)
+#         guess["cl_score"] = guess.apply(lambda row: calculate_CL_Score(row), axis=1)
+#     else:
+#         guess = elim_letters(word_guess,status_array,guess)
 
-        guess.drop('cl_score', inplace=True, axis=1)
-        guess["cl_score"] = guess.apply(lambda row: calculate_CL_Score(row), axis=1)
-    else:
-        guess = elim_letters(word_guess,status_array,guess)
-
-    possible_guess = guess.sort_values("cl_score",ascending=False).head(10)
-    #print(guess.sort_values("cl_score",ascending=False).head(10))
-    print(possible_guess["word"].head(10))
-    print("Total Possible words: " + str(len(guess.index)))
+#     possible_guess = guess.sort_values("cl_score",ascending=False).head(10)
+#     #print(guess.sort_values("cl_score",ascending=False).head(10))
+#     print(possible_guess["word"].head(10))
+#     print("Total Possible words: " + str(len(guess.index)))
 
 def test_letter_status(guess_word,correct_word):
     status = ""
@@ -205,6 +204,7 @@ def test_Eff(guess_df):
         guess_num += 1
     return guess_num
 
+#used for frequency table testing
 # freq = {}
 
 # for i in range(0,1000):
@@ -216,3 +216,65 @@ def test_Eff(guess_df):
 
 # for key, value in freq.items():
 #     print ("% d : % d"%(key, value))
+
+#quick gui for easier use
+guess = words
+guess_array = guess.sort_values("cl_score",ascending=False).head(10)["word"].tolist()
+guess_status = ""
+guess_word = ""
+
+sg.theme('DarkAmber')
+sg.set_options(font=("Helvetica", 16))
+layout = [  [sg.Text('Enter guessed word:'), sg.InputText(do_not_clear=False),],
+            [sg.Text('Enter letter status:    '), sg.InputText(do_not_clear=False)],
+            [sg.Button('Submit'), sg.Button("Next Word"), sg.Button('Quit')],
+            [sg.Text("Word guesses:")],
+            [sg.Listbox(values=guess_array, size=(30, 10), key="guess_box")],
+            [sg.Text("Words Remaining: " + str(len(guess.index)), key="words_left")],
+            [sg.Text("", key="error")]]
+
+# Create the Window
+window = sg.Window('Wordle Guesser', layout)
+# Event Loop to process "events" and get the "values" of the inputs
+while True:
+    event, values = window.read()
+    if event == sg.WIN_CLOSED or event == 'Quit': # if user closes window or clicks cancel
+        break
+    if event == "Submit":
+        guess_word = values[0]
+        guess_status = values[1]
+        if len(guess_word) != 5 or len(guess_status) != 5:
+            window.Element('error').update("Error: Invalid input")
+        else:
+            #removes any lingering error message
+            window.Element('error').update("")
+
+            guess = guessCheck(guess_word,guess_status,guess)
+            if len(guess.index) == 0:
+                window.Element('error').update("No words left. Try clicking Next Word")
+                continue
+            #code used to change cl_score based on remaining words
+            #gives higher priority to letters 
+            l1_values = guess["L1"].value_counts()
+            l2_values = guess["L2"].value_counts()
+            l3_values = guess["L3"].value_counts()
+            l4_values = guess["L4"].value_counts()
+            l5_values = guess["L5"].value_counts()
+
+            guess.drop('cl_score', inplace=True, axis=1)
+            guess["cl_score"] = guess.apply(lambda row: calculate_CL_Score(row), axis=1)
+
+            guess_array = guess.sort_values("cl_score",ascending=False)["word"].tolist()
+            window.Element("guess_box").update(values=guess_array)
+            window.Element("words_left").update("Words Remaining: " + str(len(guess.index)))
+
+    if event == "Next Word":
+        guess = words
+        guess_array = guess.sort_values("cl_score",ascending=False).head(10)["word"].tolist()
+        window.Element('error').update("")
+        window.Element("guess_box").update(values=guess_array)
+        window.Element("words_left").update("Words Remaining: " + str(len(guess.index)))
+
+
+
+window.close()
